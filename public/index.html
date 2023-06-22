@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to BrewFinder</title>
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/9.21.0/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.21.0/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.21.0/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+    <script>
+      function reset() {
+        location.reload();
+      }
+      function modalHide(){
+        document.getElementById('modal').style.display = 'none';
+      }
+    </script>
+    <div id="message">
+      <h1>Welcome to BrewFinder</h1>
+      <form id ="emailList">
+        <label for="email">Enter Email To Save and Retrieve Lists</label>
+        <input type="email" id = "email" name = "email" placeholder = "example@fmail.com">
+        <button type ="submit" id = "submitEmail">Submit Email</button>
+      </form>
+      <button onclick = "reset()" id = "logout">Logout</button>
+      <form id ="searchMethod">
+        <input type="checkbox" id = "city" name = "city" value="city" checked>
+        <label for="city">Search by City</label>
+        <input type="checkbox" id = "post" name = "post" value="post">
+        <label for="post">Search by Post Code</label>
+      </form>
+      <form id = "cityLocator">
+        <h1>Find Breweries by City</h1>
+        <label for = "location">Put in a City</label>
+        <input name = "location" id = "clocation" placeholder="New York" required>
+        <button type ="submit" >Get your brew options</button>
+      </form>
+      <form id = "postalLocator" style="display: none;">
+        <h1>Find Breweries by Post Code</h1>
+        <label for = "location">Put in a Post Code</label>
+        <input name = "location" id = "plocation" placeholder="99999" required>
+        <button type ="submit" >Get your brew options</button>
+      </form>
+    </div>
+    <div id = 'modal' style="display: none;">
+      <form id = 'listSelect'>
+        <label for = 'savedLists'>Select a Saved List</label>
+        <select id = 'savedLists'></select>
+      </form>
+      <button type = "button" onclick="modalHide()">Close</button>
+    </div>
+    <div id = "map"></div>
+    <div id = 'cHide' style="display: none;">
+      <h3 class = 'lists'>Breweries From Your Search</h3>
+      <div id = "container"></div>
+    </div>
+    <div id = 'cHide2' style="display: none;">
+      <h3 class = 'lists'>Breweries You Selected</h3>
+      <button type = "button" id = "newList">Change Lists</button>
+      <div id = "container2">
+        <div id = 'saveCards'></div>
+        <form id = "saveList">
+          <button type ="submit" >Save This List</button>
+        </form>
+        <button type = "button" id = "routeCalculator">Get Route</button>
+      </div>
+    </div>
+    <div id = 'container3' style = "display:none;"></div>
+    
+    <script defer src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCIdUZeSVeBOvo3pk1n7FzLUNACrvqRrSI&map_ids=6dd56c7e460c16d5&callback=initMap"></script>
+    <script type = "module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js';
+      import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-functions.js';
+      import { getFirestore, collection, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js';
+      import { breweryLocator } from "./scripts/api.js";
+      import { addToList } from "./scripts/dom.js";
+      import { addToListFromDb } from "./scripts/dom.js";
+      import { removeFromList } from "./scripts/dom.js";
+      import { pubList } from "./scripts/api.js";
+      import { userList, modifyList } from "./scripts/dom.js";
+      import { passMap } from "./scripts/dom.js";
+      import { moveUp } from "./scripts/dom.js";
+      import { moveDown } from "./scripts/dom.js";
+      import { modalBuild } from "./scripts/dom.js";
+      import { printRoute } from "./scripts/dom.js";
+
+      const { Map } = await google.maps.importLibrary("maps");
+      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+      const app = initializeApp({
+        apiKey: "AIzaSyCIdUZeSVeBOvo3pk1n7FzLUNACrvqRrSI",
+        authDomain: "brewfinder-c2df7.firebaseapp.com",
+        projectId: "brewfinder-c2df7",
+        storageBucket: "brewfinder-c2df7.appspot.com",
+        messagingSenderId: "24661740017",
+        appId: "1:24661740017:web:9330af5ec1511fbdbf5c50",
+        measurementId: "G-JR0N70DFFM"
+      })
+      let state = {
+        map: null,
+        brews: {},
+        brewsArr: [],
+        brewsIndex: 0,
+        listCount: 0,
+        logged: false,
+        user: '',
+        route:[]
+      }
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer();
+      async function initMap() {
+        state.map = await new Map(document.getElementById("map"), {
+          center: { lat: 1, lng: 0 },
+          zoom: 1,
+          mapId: '6dd56c7e460c16d5'
+        });
+        directionsRenderer.setMap(state.map);
+        passMap(state.map);
+        let infoBoxDiv = document.createElement('div');
+        makeInfoBox(infoBoxDiv);
+        state.map.controls[google.maps.ControlPosition.TOP_CENTER].push(infoBoxDiv);
+      }
+      await initMap();
+      async function calcRoute(){
+        let lc = userList.length - 1;
+        const sta = new google.maps.LatLng(userList[0].latitude, userList[0].longitude);
+        const end = new google.maps.LatLng(userList[lc].latitude, userList[lc].longitude);
+        let wp = [];
+        for(let i = 1; i < lc; i++){
+          wp.push({ 
+            location : new google.maps.LatLng(userList[i].latitude, userList[i].longitude),
+            stopover: false 
+          })
+        }
+        const request = {
+          origin: sta,
+          destination: end,
+          waypoints: wp,
+          optimizeWaypoints: false,
+          travelMode: 'WALKING'
+        };
+        directionsService.route(request, function(result, status) {
+          if (status == 'OK') {
+            directionsRenderer.setDirections(result);
+            state.route = result.routes[0].legs[0];
+            printRoute(state.route);
+          }
+        });
+        
+      }
+      function getWaypoints(lc){
+        let wp = [];
+        for(let i = 1; i < lc; i++){
+          wp.push({ 
+            location : new google.maps.LatLng(userList[i].latitude, userList[i].longitude),
+            stopover: false 
+          })
+        }
+        return wp;
+      }
+
+      function makeInfoBox(controlDiv) {
+        // Set CSS for the control border.
+        let controlUI = document.createElement('div');
+        controlUI.style.boxShadow = 'rgba(0, 0, 0, 0.298039) 0px 1px 4px -1px';
+        controlUI.style.backgroundColor = '#fff';
+        controlUI.style.border = '2px solid #fff';
+        controlUI.style.borderRadius = '2px';
+        controlUI.style.marginBottom = '22px';
+        controlUI.style.marginTop = '10px';
+        controlUI.style.textAlign = 'center';
+        controlDiv.appendChild(controlUI);
+      }
+      const firestore = getFirestore(app);
+      const coll = collection(firestore, "email");
+      const functions = getFunctions(app);
+      //const getBrews = httpsCallable(functions, 'getBrews');
+      const queryURL = "https://api.openbrewerydb.org/breweries?"
+      
+      async function setBrews(e) {
+        e.preventDefault();
+        let locationURL = queryURL;
+        locationURL += "by_postal=" + document.getElementById('plocation').value + "&per_page=50";
+        const thisThing = await breweryLocator(locationURL)
+        document.getElementById('cHide').style.display = 'block'
+      }
+      async function setBrews2(e) {
+        e.preventDefault();
+        let locationURL = queryURL;
+        locationURL += "by_city=" + document.getElementById('clocation').value.split(",")[0] + "&per_page=200";
+        const thisThing = await breweryLocator(locationURL)
+        document.getElementById('cHide').style.display = 'block'
+      }
+      function citySearch(e){
+        e.preventDefault();
+        document.getElementById("city").checked = true;
+        document.getElementById("cityLocator").style.display = "block";
+        document.getElementById("post").checked = false;
+        document.getElementById("postalLocator").style.display = "none";
+      }
+      function postSearch(e){
+        e.preventDefault();
+        document.getElementById("city").checked = false;
+        document.getElementById("cityLocator").style.display = "none";
+        document.getElementById("post").checked = true;
+        document.getElementById("postalLocator").style.display = "block";
+      }
+      async function getBrews(e){
+        e.preventDefault();
+        const email = document.getElementById("email").value;
+        state.user = email;
+        const docRef = doc(firestore, "email", email);
+        const docSnap = await getDoc(docRef);
+        if(docSnap.exists()){
+          state.brews = docSnap.data();
+          listSelect();
+          console.log("This email exists ", state.brews);
+        } else {
+          state.brews = {};
+          await setDoc(doc(firestore, "email", email), {
+            list0: []
+          });
+        console.log("just added new email " + email);
+        }
+        state.logged = true;
+      }
+      function listSelect(){
+        let temp = 'list' + state.listCount;
+        while([temp] in state.brews){
+          state.brewsArr[state.listCount] = state.brews[temp];
+          state.listCount++;
+          temp = 'list' + state.listCount;
+        }
+        modalBuild(state);
+      }
+      function listInUse(){
+        state.brewsIndex = document.getElementById('savedLists').value;
+        if(state.brewsIndex < state.listCount){
+          modifyList();
+          document.getElementById('cHide2').style.display = 'block'
+          state.brewsArr[state.brewsIndex].forEach(element => {
+            addToListFromDb(element);
+          });
+        } else {
+          modifyList();
+          document.getElementById('cHide2').style.display = 'none'
+        } 
+        
+      }
+      async function saveBrews(e){
+        e.preventDefault();
+        let temp = 'list' + state.brewsIndex;
+        if(state.logged){
+          const docRef = doc(firestore, "email", state.user);
+          await updateDoc(docRef, {
+            [temp]: userList,
+        });
+        }
+      }
+      
+      window.initMap = initMap;
+      document.getElementById("postalLocator").addEventListener("submit", setBrews);
+      document.getElementById("cityLocator").addEventListener("submit", setBrews2);
+      document.getElementById("city").addEventListener("change", citySearch);
+      document.getElementById("post").addEventListener("change", postSearch);
+      document.getElementById("emailList").addEventListener("submit", getBrews);
+      document.getElementById("saveList").addEventListener("submit", saveBrews);
+      document.getElementById("savedLists").addEventListener("click", listInUse);
+      document.getElementById("routeCalculator").addEventListener("click", calcRoute);
+      document.getElementById("newList").addEventListener("click", listSelect);
+    </script>
+    <script type = module src = "scripts/api.js"></script>
+    <script type = module src = "scripts/dom.js"></script>
+  </body>
+</html>

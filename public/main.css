@@ -1,0 +1,140 @@
+#map {
+    height: 400px;
+    width: 400px;
+    max-width: 100vw;
+    max-height: 100vw;
+    margin:auto;
+
+  }
+  .lists {
+    width: 400px;
+    margin: auto;
+    margin-top: 30px;
+    margin-bottom: 0px;
+  }
+  body { 
+    background: #ECEFF1; 
+    color: rgba(0,0,0,0.87); 
+    font-family: Roboto, Helvetica, Arial, sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    max-width: 100vw;
+}
+  #message, #container, #container2, #container3, #modal { 
+    background: white; 
+    max-width: 400px; 
+    margin: 40px auto 16px; 
+    padding: 32px 24px; 
+    border-radius: 3px; 
+}
+  .card {
+    padding:20px;
+    margin-bottom: 5px;
+  }
+  #container, #container2, #container3 {
+    max-height: 35vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+  .save {
+    float: right;
+  }
+  .remove {
+    position: relative;
+    bottom: 100px;
+    right: -80px;
+  }
+  .brewButton, #saveList button, #routeCalculator {
+    background-color: #039be5;
+    border-radius: 3px;
+    color: white;
+    margin-left: 12px;
+  }
+  #routeCalculator {
+    position: relative;
+    top: -20px;
+    right: -220px;
+  }
+  #modal {
+    position: fixed;
+    width: 400px;
+    right: calc(50vw - 224px);
+    top: 100px;
+    z-index: 20;
+  }
+  #message label, .card h2 { 
+    color: #ffa100; 
+    font-weight: bold; 
+    font-size: 16px; 
+    margin: 0 0 8px; 
+}
+  #message h1 { 
+    font-size: 22px; 
+    font-weight: 500; 
+    color: rgba(0,0,0,0.6); 
+    margin: 0 0 16px;
+}
+  #message input { 
+    line-height: 140%; 
+    margin: 16px 0 24px; 
+    font-size: 14px; 
+}
+  #message button { 
+    display: block; 
+    text-align: center; 
+    background: #039be5; 
+    text-transform: uppercase; 
+    text-decoration: none; 
+    color: white; 
+    padding: 16px; 
+    border-radius: 4px; 
+    margin-bottom: 16px;
+}
+  #message, #message a , #container, .card, #map, #modal,#container2, #container3 { 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); 
+}
+  #load { 
+    color: rgba(0,0,0,0.4); 
+    text-align: center; 
+    font-size: 13px; 
+}
+  @media (max-width: 600px) {
+    body, #message { 
+        margin-top: 0; 
+        background: white; 
+        box-shadow: none; 
+    }
+    body { 
+        border-top: 16px solid #ffa100; 
+    }
+    .card {
+      width: 100vw !important;
+      padding: 10px !important;
+      margin: 0px !important;
+    }
+    .lists {
+      width: 100vw !important;
+      text-align: center;
+    }
+    #saveCards{
+      width:100vw !important;
+      margin: auto;
+    }
+    #container, #container2, #container3 {
+      padding: 0 !important;
+      margin: 0 !important;
+
+    }
+    /* .remove {
+    margin-right: 30px;
+  } */
+  }
+  #logout {
+    width: 150px;
+    transform: translate(210px, -66px);
+    position: absolute;
+    
+  }
+  #submitEmail {
+    width:150px;
+  }

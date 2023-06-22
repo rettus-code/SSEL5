@@ -1,0 +1,5 @@
+AIzaSyCIdUZeSVeBOvo3pk1n7FzLUNACrvqRrSI
+
+Map ID6dd56c7e460c16d5 
+NameBrewFinder
+TypeJavaScript – Raster

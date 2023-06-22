@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@googlemaps/js-api-loader": "^1.15.2",
+    "firebase": "^9.21.0",
+    "font-awesome": "^4.7.0",
+    "google-maps": "^4.3.3",
+    "node-fetch": "^2.6.0"
+  }
+}
