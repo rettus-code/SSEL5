@@ -169,22 +169,21 @@ async function placeMarker(pub){
 }
 export function moveUp(e){
     e.preventDefault();
-    let index = e.target.id;
+    let index = parseInt(e.target.id);
     if(index > 0){
         tempPub = userList[index];
         userList[index] = userList[index-1];
         userList[index-1] = tempPub;
         rebuildList();
     } 
-    
 }
 export function moveDown(e){
     e.preventDefault();
-    let index = e.target.id;
+    let index = parseInt(e.target.id);
     if(index < userList.length -1){
         tempPub = userList[index];
-        userList[index] = userList[index-1];
-        userList[index-1] = tempPub;
+        userList[index] = userList[index + 1];
+        userList[index + 1] = tempPub;
         rebuildList();
     }
 }
