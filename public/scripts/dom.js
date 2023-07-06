@@ -207,7 +207,7 @@ export function modalBuild(state){
     option.innerHTML = "New List";
     parent.appendChild(option);
 }
-export function modifyList(list){
+export function modifyList(){
     userList = [];
     rebuildList();
 }

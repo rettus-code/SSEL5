@@ -66,7 +66,7 @@
         <label for = 'savedLists'>Select a Saved List</label>
         <select id = 'savedLists'></select>
       </form>
-      <button type = "button" onclick="modalHide()">Close</button>
+      <button type = "button" id = "closeModal" onclick="modalHide()">Close</button>
     </div>
     <div id = "map"></div>
     <div id = 'cHide' style="display: none;">
@@ -296,15 +296,14 @@
         modalBuild(state);
       }
       function listInUse(){
+        modifyList();
         state.brewsIndex = document.getElementById('savedLists').value;
         if(state.brewsIndex < state.listCount){
-          modifyList();
           document.getElementById('cHide2').style.display = 'block'
           state.brewsArr[state.brewsIndex].forEach(element => {
             addToListFromDb(element);
           });
         } else {
-          modifyList();
           document.getElementById('cHide2').style.display = 'none'
         } 
         
@@ -328,6 +327,7 @@
       document.getElementById("emailList").addEventListener("submit", getBrews);
       document.getElementById("saveList").addEventListener("submit", saveBrews);
       document.getElementById("savedLists").addEventListener("click", listInUse);
+      document.getElementById("closeModal").addEventListener("touchstart", listInUse);
       document.getElementById("routeCalculator").addEventListener("click", calcRoute);
       document.getElementById("newList").addEventListener("click", listSelect);
       document.getElementById("logout").addEventListener("click", logout);
