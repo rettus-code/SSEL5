@@ -23,14 +23,4 @@ function makeInfoBox(controlDiv, map) {
     controlUI.style.marginTop = '10px';
     controlUI.style.textAlign = 'center';
     controlDiv.appendChild(controlUI);
-  
-    // Set CSS for the control interior.
-    // var controlText = document.createElement('div');
-    // controlText.style.color = 'rgb(25,25,25)';
-    // controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
-    // controlText.style.fontSize = '100%';
-    // controlText.style.padding = '6px';
-    // controlText.textContent =
-    //     'The map shows all clicks made in the last 10 minutes.';
-    // controlUI.appendChild(controlText);
   }

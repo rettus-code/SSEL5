@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
     <title>Welcome to BrewFinder</title>
 
     <!-- update the version number as needed -->
@@ -92,6 +92,7 @@
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js';
       import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-functions.js';
       import { getFirestore, collection, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js';
+      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword} from 'https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js';
       import { breweryLocator } from "./scripts/api.js";
       import { addToList } from "./scripts/dom.js";
       import { addToListFromDb } from "./scripts/dom.js";
@@ -115,6 +116,7 @@
         appId: "1:24661740017:web:9330af5ec1511fbdbf5c50",
         measurementId: "G-JR0N70DFFM"
       })
+      const auth = getAuth(app);
       let state = {
         map: null,
         brews: {},
@@ -123,10 +125,22 @@
         listCount: 0,
         logged: false,
         user: '',
-        route:[]
+        route:[],
       }
+      const password = "12345678"
       const directionsService = new google.maps.DirectionsService();
       const directionsRenderer = new google.maps.DirectionsRenderer();
+      auth.onAuthStateChanged(user => {
+        if(user){
+          console.log(user);
+          state.user = user.email;
+          document.getElementById("email").value = state.user;
+          state.logged = true;
+          handleLogin();
+        } else {
+          state.logged = false;
+        }
+      });
       async function initMap() {
         state.map = await new Map(document.getElementById("map"), {
           center: { lat: 1, lng: 0 },
@@ -224,11 +238,35 @@
         document.getElementById("post").checked = true;
         document.getElementById("postalLocator").style.display = "block";
       }
-      async function getBrews(e){
+      function getBrews(e){
         e.preventDefault();
         const email = document.getElementById("email").value;
         state.user = email;
-        const docRef = doc(firestore, "email", email);
+        handleLogin();
+      }
+      async function handleLogin(){
+        if(!state.logged){
+          signInWithEmailAndPassword(auth, state.user, password).then((cred) => {
+            state.logged = true;
+          }).catch((err) => {
+            let temp = ("" + err).split(" ");
+            if(temp[3] === "(auth/user-not-found)."){
+              createUser()
+            } else {
+              alert(err);
+              windows.location = "/";
+            }
+          })
+        }
+        async function createUser(){
+          createUserWithEmailAndPassword(auth, state.user, password).then((cred) => {
+            state.logged = true;
+          }).catch((err) => {
+              alert(err);
+              windows.location = "/";
+          })
+        }
+        const docRef = doc(firestore, "email", state.user);
         const docSnap = await getDoc(docRef);
         if(docSnap.exists()){
           state.brews = docSnap.data();
@@ -236,12 +274,17 @@
           console.log("This email exists ", state.brews);
         } else {
           state.brews = {};
-          await setDoc(doc(firestore, "email", email), {
+          await setDoc(doc(firestore, "email", state.user), {
             list0: []
           });
-        console.log("just added new email " + email);
+        console.log("just added new email " + state.user);
         }
-        state.logged = true;
+      }
+      function logout(e){
+        e.preventDefault();
+        auth.signOut().then(() => {
+          state.logged = false;
+        })
       }
       function listSelect(){
         let temp = 'list' + state.listCount;
@@ -287,6 +330,7 @@
       document.getElementById("savedLists").addEventListener("click", listInUse);
       document.getElementById("routeCalculator").addEventListener("click", calcRoute);
       document.getElementById("newList").addEventListener("click", listSelect);
+      document.getElementById("logout").addEventListener("click", logout);
     </script>
     <script type = module src = "scripts/api.js"></script>
     <script type = module src = "scripts/dom.js"></script>

@@ -44,8 +44,12 @@ function createCard(container, count){
     city.innerText = tempPub.city;
     const state = document.createElement("p");
     state.innerText = tempPub.state;
-    const phone = document.createElement("p");
-    phone.innerText = "Phone Number: " + tempPub.phone;
+    const phoneCase = document.createElement("p")
+    phoneCase.innerText = "Phone Number: "
+    const phone = document.createElement("a");
+    phone.innerText = tempPub.phone;
+    phone.href = "tel:"+tempPub.phone;
+    phoneCase.appendChild(phone);
     const website = document.createElement("a");
     website.innerHTML = "website";
     website.href = tempPub.website_url;
@@ -88,7 +92,7 @@ function createCard(container, count){
     div.appendChild(address1);
     div.appendChild(city);
     div.appendChild(state);
-    div.appendChild(phone);
+    div.appendChild(phoneCase);
     div.appendChild(website);
     if(container !== document.getElementById("container")){
         div.appendChild(up);
